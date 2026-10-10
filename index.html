@@ -9,11 +9,12 @@
 <meta name="apple-mobile-web-app-title" content="C214" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" href="/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
 <title>C214 OA Guide</title>
 <style>
   :root { --bg:#0E141B; --ink:#E7EDF3; --muted:#8EA0B0; --line:#2A3846; --gold:#C6A15B; --gold2:#E4C98A; --green:#7DCEA0; --safe-b:env(safe-area-inset-bottom); }
   * { box-sizing:border-box; } html,body { margin:0; background:var(--bg); color:var(--ink); font-family:"Segoe UI",system-ui,sans-serif; } body { min-height:100dvh; }
-  button,input { font:inherit; color:inherit; } button { cursor:pointer; } .app { max-width:720px; margin:0 auto; padding:18px 16px 108px; }
+  button,input,select { font:inherit; color:inherit; } button { cursor:pointer; } .app { max-width:720px; margin:0 auto; padding:18px 16px 108px; }
   .kicker { letter-spacing:.18em; text-transform:uppercase; color:var(--gold); font-size:11px; font-weight:700; }
   h1 { font-family:Georgia,serif; font-weight:500; font-size:32px; line-height:1.05; margin:6px 0 8px; }
   h2 { font-family:Georgia,serif; font-weight:500; font-size:22px; margin:18px 0 8px; } h3 { font-size:15px; margin:0 0 6px; } p { color:#D5DEE6; line-height:1.45; }
@@ -33,6 +34,22 @@
   .ghost { background:transparent; border:1px solid var(--line); border-radius:12px; padding:12px; color:var(--ink); }
   .flip { min-height:180px; border-radius:18px; padding:18px; background:#1C2834; border:1px solid #3A4C5C; display:flex; flex-direction:column; justify-content:space-between; }
   .flip .q { font-family:Georgia,serif; font-size:22px; line-height:1.25; } .hidden { display:none; }
-  .formula { font-family:ui-monospace,Menlo,monospace; font-size:13px; color:var(--gold2); }
+  .choice { display:block; width:100%; text-align:left; background:#121A22; border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:8px 0; }
+  .choice .ltr { color:var(--gold); font-weight:700; margin-right:8px; }
+  .choice.pick { border-color:#6D5830; }
+  .choice.right { background:#132018; border-color:#2C5640; }
+  .choice.wrong { background:#2A1816; border-color:#6B3A34; }
+  .how { background:#132018; border:1px solid #2C5640; border-radius:14px; padding:14px; margin-top:12px; }
+  .how ol { margin:8px 0 0; padding-left:18px; }
+  .how li { margin:8px 0; }
+  .badge { display:inline-block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--gold2); border:1px solid #6D5830; border-radius:99px; padding:3px 8px; }
+  .scoreline { font-family:Georgia,serif; font-size:28px; color:var(--gold2); }
   .progress { height:8px; background:#243140; border-radius:99px; overflow:hidden; } .progress span { display:block; height:100%; background:linear-gradient(90deg,#8A6A2F,#E4C98A); }
-</style></head><body><div class="app" id="app"></div><nav class="nav" id="nav"></nav><script src="app.js"></script></body></html>
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav class="nav" id="nav"></nav>
+<script src="app.js"></script>
+</body>
+</html>
