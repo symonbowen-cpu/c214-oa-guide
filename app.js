@@ -262,24 +262,37 @@ const views = {
 };
 
 function excelPanel(){
-  return `<details class="card" style="margin-top:10px">
-    <summary style="cursor:pointer;font-weight:600;color:var(--gold2)">Excel calculator (tap to use while answering)</summary>
+  const fn = state.excelFn || "fv";
+  const open = state.excelOpen ? " open" : "";
+  const chips = ["fv","pv","pmt","rate","npv","irr"].map(id =>
+    `<button class="chip ${fn===id?"on":""}" onclick="setExcelFn('${id}')">${id.toUpperCase()}</button>`
+  ).join("");
+  return `<details class="card" style="margin-top:10px"${open}>
+    <summary style="cursor:pointer;font-weight:600;color:var(--gold2)" onclick="state.excelOpen=true;save()">Excel calculator (tap to use while answering)</summary>
     <div style="margin-top:10px">
-      <div class="tabs" style="margin-bottom:8px">
-        <button class="chip" onclick="setExcelFn('fv')">FV</button>
-        <button class="chip" onclick="setExcelFn('pv')">PV</button>
-        <button class="chip" onclick="setExcelFn('pmt')">PMT</button>
-        <button class="chip" onclick="setExcelFn('rate')">RATE</button>
-        <button class="chip" onclick="setExcelFn('npv')">NPV</button>
-        <button class="chip" onclick="setExcelFn('irr')">IRR</button>
-      </div>
-      <div id="excel-inputs"></div>
+      <div class="tabs" id="fn-tabs" style="margin-bottom:8px">${chips}</div>
+      <div id="excel-inputs">${excelInputs()}</div>
       <button class="primary" style="margin-top:10px" onclick="runExcel()">Calculate</button>
       <div id="excel-out"></div>
     </div>
   </details>`;
 }
-function setExcelFn(fn){ state.excelFn=fn; save(); render(); }
+function setExcelFn(fn){
+  state.excelFn = fn;
+  state.excelOpen = true;
+  save();
+  const box = document.getElementById("excel-inputs");
+  if (box) {
+    box.innerHTML = excelInputs();
+    document.querySelectorAll("#fn-tabs .chip").forEach(b => {
+      b.classList.toggle("on", b.textContent.toLowerCase() === fn);
+    });
+    const det = box.closest("details");
+    if (det) det.open = true;
+  } else {
+    render();
+  }
+}
 function runExcel(){
   const fn=state.excelFn||"fv";
   const out=document.getElementById("excel-out");
