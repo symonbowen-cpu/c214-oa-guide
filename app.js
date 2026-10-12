@@ -255,7 +255,7 @@ const views = {
         ${excelPanel()}
         <div class="row" style="margin-top:12px">
           <button class="ghost" style="flex:1" onclick="step(-1)">Back</button>
-          <button class="primary" style="flex:1" onclick="step(1)">${open?"Next":"Skip"}</button>
+          <button class="primary" style="flex:1" onclick="step(1)">${open?"Next":"Next (unanswered)"}</button>
         </div>
       </div>`;
   }
@@ -340,6 +340,7 @@ function excelInputs(){
   if(fn==="irr") return `<label>Cash flows including year 0 (comma-separated)</label><input id="ecfs" value="-1000,300,400,500">`;
   return "";
 }
+function pick(idx,n){ if(state.revealed[idx])return; state.picks[idx]=n; state.revealed[idx]=true; save(); render(); }
 function step(dir){ const list=pool(); state.i=(state.i+dir+list.length)%list.length; save(); render(); }
 function num(id){ return Number(document.getElementById(id).value); }
 function calcBody(){
