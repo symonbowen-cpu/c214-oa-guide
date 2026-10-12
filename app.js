@@ -1,3 +1,23 @@
+const EXCEL = [
+  { name: "FV", syntax: "=FV(rate, nper, pmt, [pv], [type])", use: "Future value of a lump sum or annuity.", oa: "Enter the rate and nper as cell references. Cash you put in is negative. Type 0 (or blank) for end-of-period payments.", trap: "Hard-coding the number inside the function instead of the cell the sheet points to." },
+  { name: "PV", syntax: "=PV(rate, nper, pmt, [fv], [type])", use: "Present value. Also the bond price.", oa: "Bond price is −PV(yield, periods, coupon, face). Face is almost always 1000. A negative result means the price you pay.", trap: "Using the coupon rate as the discount rate. Discount at the yield." },
+  { name: "PMT", syntax: "=PMT(rate, nper, pv, [fv], [type])", use: "Periodic payment on a loan or savings plan.", oa: "Rate is the rate per period. For monthly, divide the annual rate by 12 and multiply years by 12.", trap: "Forgetting to match the rate period to the payment period." },
+  { name: "RATE", syntax: "=RATE(nper, pmt, pv, [fv], [type], [guess])", use: "Interest rate or yield given the other variables.", oa: "Used when the question asks for the rate or YTM. PV is usually entered negative.", trap: "Leaving PV and FV the same sign. One must be opposite the other." },
+  { name: "NPER", syntax: "=NPER(rate, pmt, pv, [fv], [type])", use: "Number of periods.", oa: "Rare but appears. Same sign rules as the other TVM functions.", trap: "Mixing annual and monthly periods." },
+  { name: "NPV", syntax: "=NPV(rate, value1, [value2], ...)", use: "Present value of a series of future cash flows.", oa: "Excel NPV starts at period 1. Subtract the period-0 outlay outside the function: =NPV(rate, B2:B5) + B1, where B1 is the negative outlay.", trap: "Including the initial outlay inside NPV. That double-discounts year 0." },
+  { name: "IRR", syntax: "=IRR(values, [guess])", use: "Discount rate that makes NPV zero.", oa: "The range must include the initial outflow (negative) and the later inflows. Accept if IRR exceeds the hurdle.", trap: "Leaving the initial cash flow out of the range, or all values the same sign." }
+];
+
+const EXCEL_RULES = [
+  "Sign convention: money you pay out is negative. Money you receive is positive. Excel needs opposite signs to solve.",
+  "On the OA, put the inputs in the cells the question names, then reference those cells inside the function. Do not type the raw number in the formula if the sheet expects a cell reference.",
+  "Partial credit is real. Fill every cell you can. Bond face value is $1,000 — enter it even if the rest of the bond sheet is wrong.",
+  "Type argument: 0 or blank = ordinary annuity (end of period). 1 = annuity due (beginning). Most OA problems are ordinary.",
+  "Rate and nper must match. Annual rate with annual periods, or rate/m and nper × m for more frequent payments.",
+  "NPV trap: the function discounts its first value as period 1. Add the year-0 cash flow outside the function.",
+  "IRR range must contain the initial outflow and at least one later inflow."
+];
+
 const CHAPTERS = [
   { n: 1, title: "Overview of Finance", keys: [
     "Three areas: corporate finance (firm decisions), investments (valuing instruments), financial institutions (intermediaries linking savers and borrowers).",
@@ -198,6 +218,14 @@ const views = {
       <div class="tabs">${tabs}</div>
       <div class="card">${calcBody()}</div>`;
   },
+  excel() {
+    const cards = EXCEL.map(f=>`<div class="card"><h3>${f.name}</h3><div class="formula">${f.syntax}</div><p>${f.use}</p><p class="small"><strong>On the OA:</strong> ${f.oa}</p><p class="small"><strong>Trap:</strong> ${f.trap}</p></div>`).join("");
+    const rules = EXCEL_RULES.map(r=>`<li>${r}</li>`).join("");
+    return `<p class="kicker">Cell graded</p><h1>Excel functions</h1><div class="goldline"></div>
+      <p class="small">These are the functions the Excel block of the OA uses. Reference cells, not hard-coded numbers. Partial credit is awarded per cell.</p>
+      <div class="card"><h3>Rules that save points</h3><ul>${rules}</ul></div>
+      ${cards}`;
+  },
   oa() {
     const list = pool();
     const i = Math.min(state.i, list.length-1);
@@ -252,7 +280,7 @@ function runNpv(){ const r=num("hurdle"),cf=num("cf"),n=num("yrs"); let pv=0; fo
 function render(){
   if(!state.calc) state.calc="bond";
   document.getElementById("app").innerHTML=views[state.tab]();
-  document.getElementById("nav").innerHTML=[["chapters","Chapters"],["calc","Calc"],["oa","OA"]].map(([id,label])=>`<button class="${state.tab===id?"on":""}" onclick="state.tab='${id}';save();render()"><b>${label[0]}</b>${label}</button>`).join("");
+  document.getElementById("nav").innerHTML=[["chapters","Chapters"],["excel","Excel"],["calc","Calc"],["oa","OA"]].map(([id,label])=>`<button class="${state.tab===id?"on":""}" onclick="state.tab='${id}';save();render()"><b>${label[0]}</b>${label}</button>`).join("");
 }
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 render();
