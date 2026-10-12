@@ -252,6 +252,7 @@ const views = {
         <p class="small" style="margin-top:8px">Question ${i+1} of ${list.length}</p>
         <h2>${q.stem}</h2>
         ${choices}${how}
+        ${excelPanel()}
         <div class="row" style="margin-top:12px">
           <button class="ghost" style="flex:1" onclick="step(-1)">Back</button>
           <button class="primary" style="flex:1" onclick="step(1)">${open?"Next":"Skip"}</button>
@@ -260,7 +261,85 @@ const views = {
   }
 };
 
-function pick(idx,n){ if(state.revealed[idx])return; state.picks[idx]=n; state.revealed[idx]=true; save(); render(); }
+function excelPanel(){
+  return `<details class="card" style="margin-top:10px">
+    <summary style="cursor:pointer;font-weight:600;color:var(--gold2)">Excel calculator (tap to use while answering)</summary>
+    <div style="margin-top:10px">
+      <div class="tabs" style="margin-bottom:8px">
+        <button class="chip" onclick="setExcelFn('fv')">FV</button>
+        <button class="chip" onclick="setExcelFn('pv')">PV</button>
+        <button class="chip" onclick="setExcelFn('pmt')">PMT</button>
+        <button class="chip" onclick="setExcelFn('rate')">RATE</button>
+        <button class="chip" onclick="setExcelFn('npv')">NPV</button>
+        <button class="chip" onclick="setExcelFn('irr')">IRR</button>
+      </div>
+      <div id="excel-inputs"></div>
+      <button class="primary" style="margin-top:10px" onclick="runExcel()">Calculate</button>
+      <div id="excel-out"></div>
+    </div>
+  </details>`;
+}
+function setExcelFn(fn){ state.excelFn=fn; save(); render(); }
+function runExcel(){
+  const fn=state.excelFn||"fv";
+  const out=document.getElementById("excel-out");
+  try{
+    let res="";
+    if(fn==="fv"){
+      const rate=num("er"), nper=num("en"), pmt=num("ep"), pv=num("epv")||0;
+      res=money(FV(rate,nper,pmt,pv));
+    }else if(fn==="pv"){
+      const rate=num("er"), nper=num("en"), pmt=num("ep"), fv=num("efv")||0;
+      res=money(PV(rate,nper,pmt,fv));
+    }else if(fn==="pmt"){
+      const rate=num("er"), nper=num("en"), pv=num("epv"), fv=num("efv")||0;
+      res=money(PMT(rate,nper,pv,fv));
+    }else if(fn==="rate"){
+      const nper=num("en"), pmt=num("ep"), pv=num("epv"), fv=num("efv")||0;
+      res=pct(RATE(nper,pmt,pv,fv));
+    }else if(fn==="npv"){
+      const rate=num("er"), cfs=(document.getElementById("ecfs").value||"").split(",").map(s=>Number(s.trim())).filter(n=>!isNaN(n));
+      const init=num("einit")||0;
+      res=money(NPV(rate,cfs)+init);
+    }else if(fn==="irr"){
+      const cfs=(document.getElementById("ecfs").value||"").split(",").map(s=>Number(s.trim())).filter(n=>!isNaN(n));
+      res=pct(IRR(cfs));
+    }
+    out.innerHTML=`<div class="out"><strong>${res}</strong></div>`;
+  }catch(e){ out.innerHTML=`<div class="out" style="background:#2A1816;border-color:#6B3A34">Check inputs. ${e.message||""}</div>`; }
+}
+function FV(rate,nper,pmt,pv){ return -pv*Math.pow(1+rate,nper) - pmt*((Math.pow(1+rate,nper)-1)/rate); }
+function PV(rate,nper,pmt,fv){ return -pmt*(1-Math.pow(1+rate,-nper))/rate - fv/Math.pow(1+rate,nper); }
+function PMT(rate,nper,pv,fv){ return rate*(pv*Math.pow(1+rate,nper)+fv)/(Math.pow(1+rate,nper)-1)*-1; }
+function RATE(nper,pmt,pv,fv){
+  let r=0.1;
+  for(let i=0;i<40;i++){
+    const f=pv*Math.pow(1+r,nper)+pmt*(Math.pow(1+r,nper)-1)/r+fv;
+    const df=nper*pv*Math.pow(1+r,nper-1)+pmt*((nper*r*Math.pow(1+r,nper-1)-(Math.pow(1+r,nper)-1))/(r*r));
+    r-=f/df;
+  }
+  return r;
+}
+function NPV(rate,cfs){ return cfs.reduce((s,cf,i)=>s+cf/Math.pow(1+rate,i+1),0); }
+function IRR(cfs){
+  let r=0.1;
+  for(let i=0;i<50;i++){
+    let npv=0,d=0;
+    for(let t=0;t<cfs.length;t++){ npv+=cfs[t]/Math.pow(1+r,t); d-=t*cfs[t]/Math.pow(1+r,t+1); }
+    r-=npv/d;
+  }
+  return r;
+}
+function excelInputs(){
+  const fn=state.excelFn||"fv";
+  if(fn==="fv") return `<label>Rate (decimal)</label><input id="er" value="0.08"><label>Nper</label><input id="en" value="10"><label>Pmt (use negative if you pay)</label><input id="ep" value="-100"><label>PV (use negative if you invest)</label><input id="epv" value="-1000">`;
+  if(fn==="pv") return `<label>Rate</label><input id="er" value="0.08"><label>Nper</label><input id="en" value="10"><label>Pmt</label><input id="ep" value="60"><label>FV</label><input id="efv" value="1000">`;
+  if(fn==="pmt") return `<label>Rate</label><input id="er" value="0.06/12"><label>Nper</label><input id="en" value="360"><label>PV</label><input id="epv" value="200000"><label>FV</label><input id="efv" value="0">`;
+  if(fn==="rate") return `<label>Nper</label><input id="en" value="10"><label>Pmt</label><input id="ep" value="-100"><label>PV</label><input id="epv" value="1000"><label>FV</label><input id="efv" value="0">`;
+  if(fn==="npv") return `<label>Rate</label><input id="er" value="0.10"><label>Initial outlay (negative)</label><input id="einit" value="-1000"><label>Future cash flows (comma-separated, period 1 onward)</label><input id="ecfs" value="300,400,500">`;
+  if(fn==="irr") return `<label>Cash flows including year 0 (comma-separated)</label><input id="ecfs" value="-1000,300,400,500">`;
+  return "";
+}
 function step(dir){ const list=pool(); state.i=(state.i+dir+list.length)%list.length; save(); render(); }
 function num(id){ return Number(document.getElementById(id).value); }
 function calcBody(){
@@ -279,8 +358,13 @@ function runWacc(){ const after=num("rd")*(1-num("tax")); show(`<strong>${pct(nu
 function runNpv(){ const r=num("hurdle"),cf=num("cf"),n=num("yrs"); let pv=0; for(let t=1;t<=n;t++) pv+=cf/Math.pow(1+r,t); const npv=pv-num("cost"); show(`<strong>${money(npv)}</strong><div>${npv>0?"Accept.":"Reject."} Discount each cash flow, add, then subtract today’s outlay.</div>`); }
 function render(){
   if(!state.calc) state.calc="bond";
+  if(!state.excelFn) state.excelFn="fv";
   document.getElementById("app").innerHTML=views[state.tab]();
   document.getElementById("nav").innerHTML=[["chapters","Chapters"],["excel","Excel"],["calc","Calc"],["oa","OA"]].map(([id,label])=>`<button class="${state.tab===id?"on":""}" onclick="state.tab='${id}';save();render()"><b>${label[0]}</b>${label}</button>`).join("");
+  if(state.tab==="oa"){
+    const box=document.getElementById("excel-inputs");
+    if(box) box.innerHTML=excelInputs();
+  }
 }
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 render();
