@@ -261,11 +261,19 @@ const views = {
   },
   oa() {
     const list = pool();
+    const sc = score();
+    if (sc.done >= sc.total && sc.total > 0 && !state.missed && state.filter === "all") {
+      return `<p class="kicker">Objective assessment</p><h1>Set complete</h1><div class="goldline"></div>
+        <div class="card">
+          <p>You answered all ${sc.total} questions. Score: <strong>${sc.right} / ${sc.total}</strong> (${Math.round(sc.right/sc.total*100)}%).</p>
+          <p class="small">Tap below to clear your answers and start a fresh pass.</p>
+          <button class="primary" style="margin-top:12px;width:100%" onclick="resetProgress()">Start over</button>
+        </div>`;
+    }
     const i = Math.min(state.i, list.length-1);
     const q = list[i];
     const picked = state.picks[q.idx];
     const open = !!state.revealed[q.idx];
-    const sc = score();
     const choices = q.choices.map((c,n)=>{
       let cls="choice";
       if (open && n===q.answer) cls+=" right";
@@ -279,6 +287,7 @@ const views = {
       <div class="tabs">
         ${["all","calc","concept"].map(f=>`<button class="chip ${state.filter===f?"on":""}" onclick="state.filter='${f}';state.i=0;save();render()">${f==="all"?"All":f==="calc"?"Calculations":"Concepts"}</button>`).join("")}
         <button class="chip ${state.missed?"on":""}" onclick="state.missed=!state.missed;state.i=0;save();render()">Missed</button>
+        <button class="chip" onclick="resetProgress()">Reset</button>
       </div>
       <div class="card">
         <span class="badge">${q.type==="calc"?"Calculation":"Concept"} · ${q.topic}</span>
@@ -387,6 +396,14 @@ function excelInputs(){
   return "";
 }
 function pick(idx,n){ if(state.revealed[idx])return; state.picks[idx]=n; state.revealed[idx]=true; save(); render(); }
+function resetProgress(){
+  state.picks = {};
+  state.revealed = {};
+  state.i = 0;
+  state.missed = false;
+  save();
+  render();
+}
 function step(dir){ const list=pool(); state.i=(state.i+dir+list.length)%list.length; save(); render(); }
 function num(id){ return Number(document.getElementById(id).value); }
 function calcBody(){
